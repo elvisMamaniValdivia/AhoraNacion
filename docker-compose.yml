@@ -1,0 +1,19 @@
+# Solo para desarrollo y pruebas locales. Credenciales ficticias.
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: agenda
+      POSTGRES_PASSWORD: agenda
+      POSTGRES_DB: agenda_dev
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agenda"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+volumes:
+  pgdata:

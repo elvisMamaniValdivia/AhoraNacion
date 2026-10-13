@@ -1,0 +1,18 @@
+@import 'tailwindcss';
+
+@layer base {
+  html { color-scheme: light; }
+  body { @apply bg-slate-50 text-slate-900 antialiased; }
+  :focus-visible { outline: 3px solid #1d4ed8; outline-offset: 2px; }
+}
+
+/* FullCalendar */
+.fc { --fc-border-color: #cbd5e1; --fc-today-bg-color: #eff6ff; --fc-button-bg-color: #1e3a8a; --fc-button-border-color: #1e3a8a; --fc-button-hover-bg-color: #1d4ed8; --fc-button-hover-border-color: #1d4ed8; --fc-button-active-bg-color: #172554; --fc-button-active-border-color: #172554; font-size: 0.875rem; }
+.fc .fc-toolbar { flex-wrap: wrap; gap: 0.5rem; }
+.fc .fc-toolbar-title { font-size: 1.15rem; text-transform: capitalize; }
+.fc-event { cursor: pointer; }
+.fc-event.st-CANCELADA, .fc-event.st-REPROGRAMADA { opacity: .75; }
+.fc-event.st-CANCELADA .ev-title { text-decoration: line-through; }
+.fc-event.st-REPROGRAMADA { border-style: dashed !important; }
+.fc-event.st-PENDIENTE { border-style: dotted !important; border-width: 2px !important; }
+.fc-event.is-block { background: repeating-linear-gradient(45deg, #e2e8f0, #e2e8f0 6px, #f1f5f9 6px, #f1f5f9 12px) !important; border: 1px solid #64748b !important; color: #0f172a !important; }

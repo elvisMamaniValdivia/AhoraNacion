@@ -1,0 +1,241 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  ADMIN
+  ASSISTANT
+}
+
+enum Modality {
+  PRESENCIAL
+  VIRTUAL
+  TELEFONICA
+}
+
+enum AppointmentStatus {
+  PENDIENTE
+  CONFIRMADA
+  REALIZADA
+  CANCELADA
+  REPROGRAMADA
+}
+
+enum Priority {
+  BAJA
+  MEDIA
+  ALTA
+  URGENTE
+}
+
+enum ActivityType {
+  REUNION
+  ENTREVISTA
+  EVENTO_PUBLICO
+  VISITA
+  LLAMADA
+  OTRO
+}
+
+enum BlockType {
+  ALMUERZO
+  TRASLADO
+  VIAJE
+  ACTIVIDAD_PUBLICA
+  DESCANSO
+  PERSONAL
+  DIA_NO_DISPONIBLE
+}
+
+enum OccupancyKind {
+  APPOINTMENT
+  BLOCK
+}
+
+enum NotificationType {
+  CITA_CREADA
+  CITA_MODIFICADA
+  CITA_CANCELADA
+  CITA_REPROGRAMADA
+  RECORDATORIO
+}
+
+enum Channel {
+  EMAIL
+  WHATSAPP
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+model User {
+  id           String    @id @default(cuid())
+  name         String
+  email        String    @unique
+  passwordHash String
+  role         Role      @default(ASSISTANT)
+  active       Boolean   @default(true)
+  failedLogins Int       @default(0)
+  lockedUntil  DateTime? @db.Timestamptz(3)
+  createdAt    DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime  @updatedAt @db.Timestamptz(3)
+
+  sessions      Session[]
+  appointments  Appointment[]
+  blocks        ScheduleBlock[]
+  notifications Notification[]
+  preferences   NotificationPreference[]
+  auditLogs     AuditLog[]
+}
+
+model Session {
+  id         String   @id // SHA-256 del token; el token nunca se guarda
+  userId     String
+  csrfToken  String
+  expiresAt  DateTime @db.Timestamptz(3)
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Appointment {
+  id               String            @id @default(cuid())
+  title            String
+  requesterName    String
+  requesterPhone   String?
+  requesterEmail   String?
+  description      String?
+  startsAt         DateTime          @db.Timestamptz(3)
+  endsAt           DateTime          @db.Timestamptz(3)
+  place            String
+  modality         Modality          @default(PRESENCIAL)
+  meetingUrl       String?
+  status           AppointmentStatus @default(PENDIENTE)
+  priority         Priority          @default(MEDIA)
+  activityType     ActivityType      @default(REUNION)
+  notes            String?
+  cancelReason     String?
+  rescheduleReason String?
+  createdById      String
+  rescheduledFromId String?
+  createdAt        DateTime          @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime          @updatedAt @db.Timestamptz(3)
+
+  createdBy       User                     @relation(fields: [createdById], references: [id])
+  rescheduledFrom Appointment?             @relation("Reschedule", fields: [rescheduledFromId], references: [id])
+  rescheduledTo   Appointment[]            @relation("Reschedule")
+  participants    AppointmentParticipant[]
+  occupancy       Occupancy?
+  notifications   Notification[]
+
+  @@index([startsAt])
+  @@index([status])
+  @@index([createdById])
+  @@index([activityType])
+}
+
+model AppointmentParticipant {
+  id            String      @id @default(cuid())
+  appointmentId String
+  name          String
+  email         String?
+  appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+
+  @@index([appointmentId])
+}
+
+model ScheduleBlock {
+  id          String    @id @default(cuid())
+  type        BlockType
+  title       String
+  startsAt    DateTime  @db.Timestamptz(3)
+  endsAt      DateTime  @db.Timestamptz(3)
+  active      Boolean   @default(true)
+  createdById String
+  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @db.Timestamptz(3)
+  createdBy   User      @relation(fields: [createdById], references: [id])
+  occupancy   Occupancy?
+
+  @@index([startsAt])
+}
+
+/// Intervalo que realmente impide reservar. Solo existe mientras la cita/bloqueo esté activo.
+/// endsAt de una cita incluye el margen entre compromisos.
+/// La restricción EXCLUDE (GiST) está en la migración SQL manual.
+model Occupancy {
+  id            String        @id @default(cuid())
+  kind          OccupancyKind
+  appointmentId String?       @unique
+  blockId       String?       @unique
+  startsAt      DateTime      @db.Timestamptz(3)
+  endsAt        DateTime      @db.Timestamptz(3)
+  appointment   Appointment?  @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  block         ScheduleBlock? @relation(fields: [blockId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id            String             @id @default(cuid())
+  appointmentId String?
+  recipientId   String
+  type          NotificationType
+  channel       Channel            @default(EMAIL)
+  status        NotificationStatus @default(PENDING)
+  attempts      Int                @default(0)
+  scheduledFor  DateTime           @db.Timestamptz(3)
+  sentAt        DateTime?          @db.Timestamptz(3)
+  lastAttemptAt DateTime?          @db.Timestamptz(3)
+  error         String?
+  subject       String
+  body          String
+  dedupeKey     String             @unique
+  createdAt     DateTime           @default(now()) @db.Timestamptz(3)
+  appointment   Appointment?       @relation(fields: [appointmentId], references: [id])
+  recipient     User               @relation(fields: [recipientId], references: [id])
+
+  @@index([status, scheduledFor])
+}
+
+model NotificationPreference {
+  userId  String
+  type    NotificationType
+  channel Channel          @default(EMAIL)
+  enabled Boolean          @default(true)
+  user    User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, type, channel])
+}
+
+/// Solo inserción. Un trigger en la base de datos bloquea UPDATE y DELETE.
+model AuditLog {
+  id       String   @id @default(cuid())
+  actorId  String?
+  action   String
+  entity   String
+  entityId String
+  changes  Json?
+  reason   String?
+  at       DateTime @default(now()) @db.Timestamptz(3)
+  actor    User?    @relation(fields: [actorId], references: [id])
+
+  @@index([entity, entityId])
+  @@index([at])
+}
+
+model SystemSetting {
+  key         String   @id
+  value       Json
+  updatedAt   DateTime @updatedAt @db.Timestamptz(3)
+  updatedById String?
+}
