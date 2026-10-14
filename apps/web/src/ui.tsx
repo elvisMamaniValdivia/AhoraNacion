@@ -32,7 +32,7 @@ export const btn = {
   danger: 'inline-flex items-center justify-center gap-1 rounded-md bg-red-800 px-3 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50',
   link: 'text-sm font-medium text-red-700 underline underline-offset-2 hover:text-red-800',
 };
-export const input = 'w-full rounded-md border border-slate-400 bg-white px-3 py-2 text-sm placeholder:text-slate-500 disabled:bg-slate-100';
+export const input = 'w-full rounded-md border border-slate-400 bg-white px-3 py-2 text-base sm:text-sm placeholder:text-slate-500 disabled:bg-slate-100';
 
 export function Field({ label, error, children, hint, className = '' }: { label: string; error?: string; hint?: string; children: (id: string, describedBy?: string) => ReactNode; className?: string }) {
   const id = useId();

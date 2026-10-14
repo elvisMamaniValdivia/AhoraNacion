@@ -34,6 +34,15 @@ function addDays(dateStr: string, days: number): string {
 export function WeeklyScheduleView() {
   const { user } = useAuth();
   const [anchorDate, setAnchorDate] = useState<string>(limaToday());
+  const [selectedDayIdx, setSelectedDayIdx] = useState<number>(() => {
+    const today = limaToday();
+    const monday = getMonday(today);
+    for (let i = 0; i < 7; i++) {
+      if (addDays(monday, i) === today) return i;
+    }
+    return 0;
+  });
+
   const [selectedApptId, setSelectedApptId] = useState<string | null>(null);
   const [creatingRange, setCreatingRange] = useState<{ start: string; end: string } | null>(null);
   const [showBlockModal, setShowBlockModal] = useState(false);
@@ -51,12 +60,14 @@ export function WeeklyScheduleView() {
         dateStr: dStr,
         dayName: DAYS_NAMES[i],
         shortDate: `${d}/${m}`,
+        dayNumber: d,
         isToday: dStr === limaToday(),
       };
     });
   }, [mondayStr]);
 
   const sundayStr = weekDays[6].dateStr;
+  const selectedDay = weekDays[selectedDayIdx] ?? weekDays[0];
 
   // Cargar citas
   const apptsQuery = useQuery({
@@ -130,55 +141,64 @@ export function WeeklyScheduleView() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 max-w-full overflow-hidden">
       {/* Barra superior de controles y navegación semanal */}
-      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="rounded-xl border border-slate-200 bg-white p-3.5 sm:p-4 shadow-sm space-y-3">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <span className="text-xs font-semibold uppercase tracking-wider text-red-600 block">
+            <span className="text-[11px] font-black uppercase tracking-wider text-red-600 block">
               Horario Semanal del Candidato
             </span>
-            <h2 className="text-xl font-black text-slate-800">
-              Lunes {weekDays[0].shortDate} al Domingo {weekDays[6].shortDate}
+            <h2 className="text-lg sm:text-xl font-black text-slate-800">
+              {weekDays[0].dayName} {weekDays[0].shortDate} al {weekDays[6].dayName} {weekDays[6].shortDate}
             </h2>
-            <p className="text-xs text-slate-500">
-              Zona horaria oficial: <strong>America/Lima (UTC-5)</strong> · Horario interactivo por horas
+            <p className="text-[11px] text-slate-500">
+              Hora oficial: <strong>America/Lima (UTC-5)</strong> · Horarios sin solapamiento
             </p>
           </div>
 
           {/* Botones de navegación semanal */}
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
             <button
-              onClick={() => setAnchorDate(addDays(anchorDate, -7))}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 transition shadow-sm"
+              onClick={() => {
+                setAnchorDate(addDays(anchorDate, -7));
+              }}
+              className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 transition shadow-xs"
             >
-              ◀ Semana anterior
+              ◀ Ant.
             </button>
             <button
-              onClick={() => setAnchorDate(limaToday())}
-              className="rounded-lg border border-red-600 bg-red-50 px-3 py-1.5 text-xs font-bold text-red-700 hover:bg-red-100 transition shadow-sm"
+              onClick={() => {
+                const today = limaToday();
+                setAnchorDate(today);
+                const monday = getMonday(today);
+                for (let i = 0; i < 7; i++) {
+                  if (addDays(monday, i) === today) setSelectedDayIdx(i);
+                }
+              }}
+              className="rounded-lg border border-red-600 bg-red-50 px-2.5 py-1.5 text-xs font-bold text-red-700 hover:bg-red-100 transition shadow-xs"
             >
               Esta semana
             </button>
             <button
-              onClick={() => setAnchorDate(addDays(anchorDate, 7))}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 transition shadow-sm"
+              onClick={() => {
+                setAnchorDate(addDays(anchorDate, 7));
+              }}
+              className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 transition shadow-xs"
             >
-              Semana siguiente ▶
+              Sig. ▶
             </button>
 
             <button
               onClick={() => setShow24h(!show24h)}
-              className={`rounded-lg border px-3 py-1.5 text-xs font-bold transition shadow-sm ${
+              className={`rounded-lg border px-2.5 py-1.5 text-xs font-bold transition shadow-xs ${
                 show24h
                   ? 'border-purple-600 bg-purple-50 text-purple-800'
                   : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100'
               }`}
             >
-              {show24h ? '🌙 Vista 24 Horas' : '☀️ 06:00 a 24:00 (Ver 24h)'}
+              {show24h ? '🌙 24H' : '☀️ Horario Normal'}
             </button>
-
-            <div className="h-6 w-px bg-slate-300" />
 
             <button
               onClick={() => {
@@ -188,50 +208,46 @@ export function WeeklyScheduleView() {
               }}
               className={btn.primary}
             >
-              ＋ Nueva cita
+              ＋ Cita
             </button>
 
             {user?.role === 'ADMIN' && (
               <button onClick={() => setShowBlockModal(true)} className={btn.secondary}>
-                🔒 Bloquear horario
+                🔒 Bloquear
               </button>
             )}
           </div>
         </div>
 
         {/* Leyenda visual exacta requerida por el usuario */}
-        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-4 text-xs">
-              <span className="font-bold text-slate-800">Convención de colores:</span>
-              <span className="inline-flex items-center gap-1.5 rounded-md bg-emerald-100 border border-emerald-500 px-2.5 py-1 font-bold text-emerald-900">
-                <span className="h-2.5 w-2.5 rounded-full bg-emerald-600 animate-pulse" />
-                🟢 Verde: Disponible (Click para agendar)
+        <div className="rounded-lg border border-slate-200 bg-slate-50 p-2.5 text-xs">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              <span className="font-bold text-slate-800">Colores:</span>
+              <span className="inline-flex items-center gap-1 font-semibold text-emerald-800">
+                <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                🟢 Disponible
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-md bg-red-100 border border-red-500 px-2.5 py-1 font-bold text-red-950">
+              <span className="inline-flex items-center gap-1 font-semibold text-red-800">
                 <span className="h-2.5 w-2.5 rounded-full bg-red-600" />
-                🔴 Rojo: Ya concluido
+                🔴 Concluido
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-md bg-orange-100 border border-orange-500 px-2.5 py-1 font-bold text-orange-950">
-                <span className="h-2.5 w-2.5 rounded-full bg-orange-600" />
-                🟠 Anaranjado: Reagendar
+              <span className="inline-flex items-center gap-1 font-semibold text-orange-800">
+                <span className="h-2.5 w-2.5 rounded-full bg-orange-500" />
+                🟠 Reagendar
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-md bg-blue-100 border border-blue-500 px-2.5 py-1 font-bold text-blue-950">
+              <span className="inline-flex items-center gap-1 font-semibold text-blue-800">
                 <span className="h-2.5 w-2.5 rounded-full bg-blue-600" />
-                🔵 Azul: Cita Confirmada
+                🔵 Confirmada
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-md bg-purple-100 border border-purple-500 px-2.5 py-1 font-bold text-purple-950">
+              <span className="inline-flex items-center gap-1 font-semibold text-purple-800">
                 <span className="h-2.5 w-2.5 rounded-full bg-purple-600" />
-                🟣 Morado: Horario Especial del Candidato
-              </span>
-              <span className="inline-flex items-center gap-1.5 rounded-md bg-slate-200 border border-slate-400 px-2.5 py-1 font-bold text-slate-800">
-                🔒 Gris: Bloqueo de agenda
+                🟣 Especial
               </span>
             </div>
 
-            {/* Resumen numérico */}
-            <div className="flex items-center gap-3 text-xs font-semibold text-slate-600">
-              <span>Total citas: <strong className="text-slate-900">{weekStats.total}</strong></span>
+            <div className="flex items-center gap-2 text-[11px] font-bold text-slate-600">
+              <span>Total: <strong className="text-slate-900">{weekStats.total}</strong></span>
               <span>· Concluidas: <strong className="text-red-700">{weekStats.concluded}</strong></span>
               <span>· Por reagendar: <strong className="text-orange-700">{weekStats.reschedule}</strong></span>
               <span>· Confirmadas: <strong className="text-blue-700">{weekStats.confirmed}</strong></span>
@@ -240,8 +256,216 @@ export function WeeklyScheduleView() {
         </div>
       </div>
 
-      {/* Cuadrícula semanal por horas (Lunes a Domingo) */}
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+      {/* ========================================================= */}
+      {/* 📱 VISTA MÓVIL (< 768px): Cero desborde, 100% fija        */}
+      {/* ========================================================= */}
+      <div className="block md:hidden space-y-3">
+        {/* Barra superior de 7 días (Grid fijo, no se mueve la pantalla) */}
+        <div className="grid grid-cols-7 gap-1 rounded-xl bg-slate-200/90 p-1 shadow-inner">
+          {weekDays.map((d, idx) => {
+            const isSelected = selectedDayIdx === idx;
+            // Contar citas en este día
+            const dayApptsCount = appointments.filter((a) => {
+              const aStartMs = new Date(a.startsAt).getTime();
+              const dStartMs = new Date(`${d.dateStr}T00:00:00-05:00`).getTime();
+              const dEndMs = new Date(`${d.dateStr}T23:59:59-05:00`).getTime();
+              return aStartMs >= dStartMs && aStartMs <= dEndMs;
+            }).length;
+
+            return (
+              <button
+                key={d.dateStr}
+                onClick={() => setSelectedDayIdx(idx)}
+                className={`flex flex-col items-center justify-center py-2 px-0.5 rounded-lg transition text-center ${
+                  isSelected
+                    ? 'bg-red-600 text-white font-black shadow-md ring-2 ring-red-300'
+                    : 'bg-white text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                <span className="text-[9px] uppercase font-bold tracking-tight">
+                  {d.dayName.slice(0, 3)}
+                </span>
+                <span className="text-sm font-black leading-tight mt-0.5">
+                  {d.dayNumber}
+                </span>
+                <div className="h-1.5 flex items-center justify-center mt-0.5">
+                  {dayApptsCount > 0 ? (
+                    <span className={`inline-block h-1.5 w-1.5 rounded-full ${isSelected ? 'bg-white' : 'bg-red-600'}`} />
+                  ) : (
+                    <span className="inline-block h-1 w-1 rounded-full bg-slate-300" />
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Cabecera del día seleccionado con botones anterior / siguiente */}
+        <div className="flex items-center justify-between rounded-xl border border-red-200 bg-red-50/70 p-3 shadow-xs">
+          <div>
+            <span className="text-[10px] font-black uppercase tracking-wider text-red-600 block">
+              Día Seleccionado
+            </span>
+            <h3 className="text-base font-black text-slate-900 leading-tight">
+              {selectedDay.dayName} {selectedDay.shortDate} {selectedDay.isToday && '· (Hoy)'}
+            </h3>
+          </div>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setSelectedDayIdx(Math.max(0, selectedDayIdx - 1))}
+              disabled={selectedDayIdx === 0}
+              aria-label="Día anterior"
+              className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs font-bold text-slate-700 disabled:opacity-30"
+            >
+              ◀
+            </button>
+            <button
+              onClick={() => setSelectedDayIdx(Math.min(6, selectedDayIdx + 1))}
+              disabled={selectedDayIdx === 6}
+              aria-label="Día siguiente"
+              className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs font-bold text-slate-700 disabled:opacity-30"
+            >
+              ▶
+            </button>
+          </div>
+        </div>
+
+        {/* Lista horaria vertical a ancho completo (100% de la pantalla) */}
+        <div className="space-y-2">
+          {activeHours.map((hour) => {
+            const hourLabel = `${String(hour).padStart(2, '0')}:00`;
+            const nextHourLabel = `${String(hour + 1).padStart(2, '0')}:00`;
+            const isSpecialHour = hour < 7 || hour >= 21;
+
+            const slotStartIso = `${selectedDay.dateStr}T${String(hour).padStart(2, '0')}:00:00-05:00`;
+            const slotEndIso = `${selectedDay.dateStr}T${String(hour + 1).padStart(2, '0')}:00:00-05:00`;
+            const slotStartMs = new Date(slotStartIso).getTime();
+            const slotEndMs = new Date(slotEndIso).getTime();
+
+            // Citas
+            const apptsInSlot = appointments.filter((a) => {
+              const aStart = new Date(a.startsAt).getTime();
+              const aEnd = new Date(a.endsAt).getTime();
+              return aStart < slotEndMs && aEnd > slotStartMs;
+            });
+
+            // Bloqueos
+            const blocksInSlot = blocks.filter((b) => {
+              const bStart = new Date(b.startsAt).getTime();
+              const bEnd = new Date(b.endsAt).getTime();
+              return bStart < slotEndMs && bEnd > slotStartMs;
+            });
+
+            return (
+              <div
+                key={hour}
+                className="flex items-stretch gap-2 rounded-xl border border-slate-200 bg-white p-2.5 shadow-xs"
+              >
+                {/* Columna Hora */}
+                <div
+                  className={`w-16 shrink-0 rounded-lg p-2 text-center flex flex-col items-center justify-center font-mono ${
+                    isSpecialHour ? 'bg-purple-100 text-purple-900 border border-purple-300' : 'bg-slate-100 text-slate-700'
+                  }`}
+                >
+                  <span className="text-xs font-black">{hourLabel}</span>
+                  <span className="text-[9px] text-slate-500">{nextHourLabel}</span>
+                  {isSpecialHour && <span className="text-[8px] font-black text-purple-700 uppercase">Especial</span>}
+                </div>
+
+                {/* Columna Contenido */}
+                <div className="flex-1 min-w-0">
+                  {blocksInSlot.length > 0 ? (
+                    <div className="rounded-lg border border-slate-300 bg-slate-100 p-2 text-xs text-slate-800">
+                      <div className="font-bold flex items-center gap-1 truncate">
+                        <span>🔒</span>
+                        <span>[{BLOCK_LABEL[blocksInSlot[0].type]}] {blocksInSlot[0].title}</span>
+                      </div>
+                      <div className="text-[10px] text-slate-500 mt-0.5">
+                        {fmtTime(blocksInSlot[0].startsAt)} - {fmtTime(blocksInSlot[0].endsAt)}
+                      </div>
+                    </div>
+                  ) : apptsInSlot.length > 0 ? (
+                    <div className="flex flex-col gap-1.5">
+                      {apptsInSlot.map((a) => {
+                        const aEndMs = new Date(a.endsAt).getTime();
+                        const isPast = aEndMs < nowMs;
+
+                        let cardCls = '';
+                        let badgeCls = '';
+                        let statusTag = '';
+
+                        if (a.status === 'REALIZADA' || (isPast && a.status !== 'PENDIENTE' && a.status !== 'REPROGRAMADA')) {
+                          cardCls = 'border-2 border-red-500 bg-red-50 text-red-950';
+                          badgeCls = 'bg-red-600 text-white';
+                          statusTag = '🔴 Concluido';
+                        } else if (a.status === 'REPROGRAMADA' || a.status === 'PENDIENTE') {
+                          cardCls = 'border-2 border-orange-500 bg-orange-50 text-orange-950';
+                          badgeCls = 'bg-orange-600 text-white';
+                          statusTag = '🟠 Reagendar';
+                        } else if (isSpecialHour) {
+                          cardCls = 'border-2 border-purple-500 bg-purple-50 text-purple-950';
+                          badgeCls = 'bg-purple-700 text-white';
+                          statusTag = '🟣 Horario Especial';
+                        } else {
+                          cardCls = 'border-2 border-blue-500 bg-blue-50 text-blue-950';
+                          badgeCls = 'bg-blue-600 text-white';
+                          statusTag = '🔵 Confirmada';
+                        }
+
+                        return (
+                          <button
+                            key={a.id}
+                            onClick={() => setSelectedApptId(a.id)}
+                            className={`w-full text-left rounded-lg p-2.5 transition active:scale-[0.99] ${cardCls}`}
+                          >
+                            <div className="flex items-center justify-between gap-1 mb-1">
+                              <span className={`rounded-full px-2 py-0.5 text-[9px] font-black ${badgeCls}`}>
+                                {statusTag}
+                              </span>
+                              <span className="font-mono text-[10px] font-bold text-slate-700">
+                                {fmtTime(a.startsAt)} - {fmtTime(a.endsAt)}
+                              </span>
+                            </div>
+                            <div className="text-xs font-black text-slate-900 leading-snug truncate">
+                              {a.title}
+                            </div>
+                            <div className="text-[11px] text-slate-700 truncate mt-0.5">
+                              👤 {a.requesterName}
+                            </div>
+                            {a.place && (
+                              <div className="text-[10px] text-slate-600 truncate mt-0.5">
+                                📍 {a.place}
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => handleSlotClick(selectedDay.dateStr, hour)}
+                      className="w-full h-full min-h-[46px] flex items-center justify-between rounded-lg border border-dashed border-emerald-400 bg-emerald-50/70 px-3 py-2 text-emerald-800 transition active:bg-emerald-100"
+                    >
+                      <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-900">
+                        <span className="h-2 w-2 rounded-full bg-emerald-600" />
+                        Disponible
+                      </span>
+                      <span className="text-[11px] font-bold text-emerald-700 bg-white rounded-md border border-emerald-300 px-2 py-0.5 shadow-2xs">
+                        ＋ Agendar
+                      </span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ========================================================= */}
+      {/* 💻 VISTA ESCRITORIO (>= 768px): Cuadrícula de 7 Días       */}
+      {/* ========================================================= */}
+      <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm max-w-full">
         <table className="w-full border-collapse text-left">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-100 text-slate-700">

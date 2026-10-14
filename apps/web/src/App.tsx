@@ -61,20 +61,20 @@ export function App() {
           </div>
 
           {/* Navegación Principal */}
-          <nav className="flex items-center gap-1">
+          <nav className="w-full md:w-auto overflow-x-auto py-1 scrollbar-none flex items-center gap-1 order-3 md:order-2">
             <button
               onClick={() => setCurrentTab('schedule')}
-              className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${
+              className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold transition ${
                 currentTab === 'schedule'
                   ? 'bg-red-600 text-white shadow-sm'
                   : 'text-slate-700 hover:bg-red-50 hover:text-red-700'
               }`}
             >
-              📅 Horario Semanal (Lun–Dom)
+              📅 Horario Semanal
             </button>
             <button
               onClick={() => setCurrentTab('dashboard')}
-              className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${
+              className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold transition ${
                 currentTab === 'dashboard'
                   ? 'bg-red-600 text-white shadow-sm'
                   : 'text-slate-700 hover:bg-red-50 hover:text-red-700'
@@ -84,7 +84,7 @@ export function App() {
             </button>
             <button
               onClick={() => setCurrentTab('calendar')}
-              className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${
+              className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold transition ${
                 currentTab === 'calendar'
                   ? 'bg-red-600 text-white shadow-sm'
                   : 'text-slate-700 hover:bg-red-50 hover:text-red-700'
@@ -94,7 +94,7 @@ export function App() {
             </button>
             <button
               onClick={() => setCurrentTab('search')}
-              className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${
+              className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold transition ${
                 currentTab === 'search'
                   ? 'bg-red-600 text-white shadow-sm'
                   : 'text-slate-700 hover:bg-red-50 hover:text-red-700'
@@ -105,7 +105,7 @@ export function App() {
             {user.role === 'ADMIN' && (
               <button
                 onClick={() => setCurrentTab('admin')}
-                className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${
+                className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold transition ${
                   currentTab === 'admin'
                     ? 'bg-red-600 text-white shadow-sm'
                     : 'text-slate-700 hover:bg-red-50 hover:text-red-700'
