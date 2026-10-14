@@ -52,6 +52,7 @@ Sistema profesional, seguro y colaborativo de agenda compartida para un candidat
 │       │   └── AppointmentDetail.tsx# Detalle, historial y reprogramación
 │       └── vercel.json         # Configuración y cabeceras de seguridad
 ├── docs/
+│   ├── arquitectura.md         # Diagramas C4, modelo de datos y concurrencia
 │   ├── api.md                  # Especificación de endpoints REST con ejemplos
 │   ├── modelo-datos.md         # Diagrama relacional y entidades
 │   └── despliegue-y-riesgos.md # Despliegue en Supabase, Render y Vercel
