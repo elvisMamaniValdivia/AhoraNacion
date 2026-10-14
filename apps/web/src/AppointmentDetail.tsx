@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, ApiError } from './api';
-import { Alternative, Appointment, MODALITY_LABEL, ACTIVITY_LABEL, Conflict } from './types';
+import { Alternative, Appointment, ACTIVITY_LABEL, Conflict } from './types';
 import { fmtDateTime, fmtFull, fmtRange, fromInput, toInput } from './time';
 import { AppointmentForm } from './AppointmentForm';
 import { Alternatives, TimeRangePicker } from './TimeRangePicker';
-import { btn, ErrorBox, Field, input, Modal, PriorityTag, StatusBadge, Loading } from './ui';
+import { btn, ErrorBox, Field, input, Modal, StatusBadge, Loading } from './ui';
 
 const ACTION_LABEL: Record<string, string> = {
   'appointment.create': 'Creó la cita', 'appointment.update': 'Modificó la cita',
@@ -40,8 +40,7 @@ export function AppointmentDetail({ id, onClose }: { id: string; onClose: () => 
     <Modal title={a.title} onClose={onClose} wide>
       <div className="flex flex-wrap items-center gap-2">
         <StatusBadge status={a.status} />
-        <PriorityTag priority={a.priority} />
-        <span className="text-xs text-slate-600">{ACTIVITY_LABEL[a.activityType]} · {MODALITY_LABEL[a.modality]}</span>
+        <span className="text-xs text-slate-600">{ACTIVITY_LABEL[a.activityType]}</span>
       </div>
 
       {mode === 'view' && (
@@ -49,7 +48,7 @@ export function AppointmentDetail({ id, onClose }: { id: string; onClose: () => 
           <dl className="mt-4 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
             <Item k="Fecha" v={<span className="capitalize">{fmtFull(a.startsAt)}</span>} />
             <Item k="Horario (Lima)" v={fmtRange(a.startsAt, a.endsAt).split(' · ')[1]} />
-            <Item k="Lugar" v={a.place} />
+            <Item k="Lugar" v={a.place || 'Por coordinar'} />
             <Item k="Solicita" v={a.requesterName} />
             <Item k="Registrada por" v={a.createdBy.name} />
             <Item k="Última modificación" v={fmtDateTime(a.updatedAt)} />

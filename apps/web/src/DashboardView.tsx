@@ -86,13 +86,13 @@ export function DashboardView() {
   return (
     <div className="space-y-6">
       {/* Banner de bienvenida y acceso rápido */}
-      <div className="flex flex-col gap-4 rounded-xl border border-blue-200 bg-gradient-to-r from-blue-900 to-indigo-900 p-6 text-white shadow-md sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 rounded-xl border border-red-300 bg-gradient-to-r from-red-600 via-rose-700 to-red-800 p-6 text-white shadow-md sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <span className="inline-block rounded bg-blue-800/80 px-2 py-0.5 text-xs font-semibold uppercase tracking-wider text-blue-100">
-            Agenda del Candidato
+          <span className="inline-block rounded bg-red-800/90 px-2.5 py-0.5 text-xs font-black uppercase tracking-wider text-red-100 shadow-sm">
+            Ahora Nación
           </span>
-          <h1 className="mt-1 text-2xl font-bold">Panel de Coordinación</h1>
-          <p className="text-sm text-blue-200">
+          <h1 className="mt-1.5 text-2xl font-black">Panel de Coordinación del Candidato</h1>
+          <p className="text-sm text-red-100">
             Hoy en Lima: <strong className="capitalize text-white">{fmtFull(new Date())}</strong> · {user?.name} ({user?.role === 'ADMIN' ? 'Administrador' : 'Asistente'})
           </p>
         </div>

@@ -93,16 +93,41 @@ export function CalendarView() {
 
   // FullCalendar event items
   const events = useMemo(() => {
+    const nowMs = Date.now();
     const apptEvents = filteredAppointments.map((a) => {
-      const st = STATUS_STYLE[a.status];
+      const aEndMs = new Date(a.endsAt).getTime();
+      const isPast = aEndMs < nowMs;
+
+      let bg = '#dbeafe';
+      let border = '#2563eb';
+      let text = '#1e40af';
+      let icon = '🔵';
+
+      if (a.status === 'REALIZADA' || (isPast && a.status !== 'PENDIENTE' && a.status !== 'REPROGRAMADA' && a.status !== 'CANCELADA')) {
+        bg = '#fee2e2';
+        border = '#dc2626';
+        text = '#991b1b';
+        icon = '🔴';
+      } else if (a.status === 'REPROGRAMADA' || a.status === 'PENDIENTE') {
+        bg = '#ffedd5';
+        border = '#ea580c';
+        text = '#9a3412';
+        icon = '🟠';
+      } else if (a.status === 'CANCELADA') {
+        bg = '#f1f5f9';
+        border = '#94a3b8';
+        text = '#475569';
+        icon = '✕';
+      }
+
       return {
         id: `appt:${a.id}`,
-        title: `${st.icon} ${a.title}`,
+        title: `${icon} ${a.title}`,
         start: toLimaWall(a.startsAt),
         end: toLimaWall(a.endsAt),
-        backgroundColor: st.bg,
-        borderColor: st.border,
-        textColor: st.text,
+        backgroundColor: bg,
+        borderColor: border,
+        textColor: text,
         classNames: [`st-${a.status}`],
         extendedProps: {
           type: 'appointment',
@@ -291,23 +316,28 @@ export function CalendarView() {
           </div>
         </div>
 
-        {/* Leyenda accesible */}
+        {/* Convención de colores de la agenda */}
         <div className="flex flex-wrap items-center gap-3 pt-2 text-xs border-t border-slate-100">
-          <span className="font-semibold text-slate-700">Leyenda:</span>
-          {Object.entries(STATUS_STYLE).map(([stKey, s]) => (
-            <span key={stKey} className="inline-flex items-center gap-1">
-              <span
-                className="inline-block h-3 w-3 rounded-full border"
-                style={{ backgroundColor: s.bg, borderColor: s.border }}
-              />
-              <span className="font-medium text-slate-700">
-                {s.icon} {STATUS_LABEL[stKey as Status]}
-              </span>
-            </span>
-          ))}
-          <span className="inline-flex items-center gap-1">
+          <span className="font-semibold text-slate-700">Convención:</span>
+          <span className="inline-flex items-center gap-1 font-semibold text-emerald-800">
+            <span className="inline-block h-3 w-3 rounded-full border border-emerald-500 bg-emerald-300" />
+            🟢 Horario Disponible (Haga clic en la cuadrícula)
+          </span>
+          <span className="inline-flex items-center gap-1 font-semibold text-red-800">
+            <span className="inline-block h-3 w-3 rounded-full border border-red-500 bg-red-200" />
+            🔴 Ya concluido
+          </span>
+          <span className="inline-flex items-center gap-1 font-semibold text-orange-800">
+            <span className="inline-block h-3 w-3 rounded-full border border-orange-500 bg-orange-200" />
+            🟠 Reagendar / Pendiente
+          </span>
+          <span className="inline-flex items-center gap-1 font-semibold text-blue-800">
+            <span className="inline-block h-3 w-3 rounded-full border border-blue-500 bg-blue-200" />
+            🔵 Confirmada
+          </span>
+          <span className="inline-flex items-center gap-1 font-semibold text-slate-700">
             <span className="inline-block h-3 w-3 rounded border border-slate-500 bg-slate-200" />
-            <span className="font-medium text-slate-700">🔒 Bloqueo de agenda</span>
+            🔒 Bloqueo de agenda
           </span>
         </div>
       </div>

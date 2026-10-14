@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from './auth';
 import { DashboardView } from './DashboardView';
+import { WeeklyScheduleView } from './WeeklyScheduleView';
 import { CalendarView } from './CalendarView';
 import { SearchView } from './SearchView';
 import { AdminViews } from './AdminViews';
@@ -12,7 +13,7 @@ import { btn } from './ui';
 
 export function App() {
   const { user, loading, logout } = useAuth();
-  const [currentTab, setCurrentTab] = useState<'dashboard' | 'calendar' | 'search' | 'admin'>('dashboard');
+  const [currentTab, setCurrentTab] = useState<'dashboard' | 'schedule' | 'calendar' | 'search' | 'admin'>('schedule');
   const [showGlobalCreate, setShowGlobalCreate] = useState(false);
   const [createdApptId, setCreatedApptId] = useState<string | null>(null);
   const [nowLima, setNowLima] = useState(new Date());
@@ -42,11 +43,15 @@ export function App() {
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-2.5 sm:px-6">
           {/* Logo y Titular */}
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-900 text-white font-black text-sm shadow">
-              AN
+            <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-red-600 shadow ring-2 ring-red-100">
+              <img
+                src="/logo-ahora-nacion.png"
+                alt="Ahora Nación"
+                className="h-full w-full object-cover"
+              />
             </div>
             <div>
-              <span className="text-xs font-black uppercase tracking-wider text-blue-900 block leading-tight">
+              <span className="text-xs font-black uppercase tracking-wider text-red-600 block leading-tight">
                 Ahora Nación
               </span>
               <span className="text-sm font-bold text-slate-800 leading-tight">
@@ -58,11 +63,21 @@ export function App() {
           {/* Navegación Principal */}
           <nav className="flex items-center gap-1">
             <button
+              onClick={() => setCurrentTab('schedule')}
+              className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${
+                currentTab === 'schedule'
+                  ? 'bg-red-600 text-white shadow-sm'
+                  : 'text-slate-700 hover:bg-red-50 hover:text-red-700'
+              }`}
+            >
+              📅 Horario Semanal (Lun–Dom)
+            </button>
+            <button
               onClick={() => setCurrentTab('dashboard')}
               className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${
                 currentTab === 'dashboard'
-                  ? 'bg-blue-900 text-white'
-                  : 'text-slate-700 hover:bg-slate-100'
+                  ? 'bg-red-600 text-white shadow-sm'
+                  : 'text-slate-700 hover:bg-red-50 hover:text-red-700'
               }`}
             >
               Panel Principal
@@ -71,18 +86,18 @@ export function App() {
               onClick={() => setCurrentTab('calendar')}
               className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${
                 currentTab === 'calendar'
-                  ? 'bg-blue-900 text-white'
-                  : 'text-slate-700 hover:bg-slate-100'
+                  ? 'bg-red-600 text-white shadow-sm'
+                  : 'text-slate-700 hover:bg-red-50 hover:text-red-700'
               }`}
             >
-              Calendario
+              Calendario General
             </button>
             <button
               onClick={() => setCurrentTab('search')}
               className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${
                 currentTab === 'search'
-                  ? 'bg-blue-900 text-white'
-                  : 'text-slate-700 hover:bg-slate-100'
+                  ? 'bg-red-600 text-white shadow-sm'
+                  : 'text-slate-700 hover:bg-red-50 hover:text-red-700'
               }`}
             >
               Búsqueda y Reportes
@@ -92,8 +107,8 @@ export function App() {
                 onClick={() => setCurrentTab('admin')}
                 className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${
                   currentTab === 'admin'
-                    ? 'bg-blue-900 text-white'
-                    : 'text-slate-700 hover:bg-slate-100'
+                    ? 'bg-red-600 text-white shadow-sm'
+                    : 'text-slate-700 hover:bg-red-50 hover:text-red-700'
                 }`}
               >
                 Administración
@@ -143,6 +158,7 @@ export function App() {
 
       {/* Contenido de la Pantalla */}
       <main className="mx-auto w-full max-w-7xl flex-1 p-4 sm:p-6">
+        {currentTab === 'schedule' && <WeeklyScheduleView />}
         {currentTab === 'dashboard' && <DashboardView />}
         {currentTab === 'calendar' && <CalendarView />}
         {currentTab === 'search' && <SearchView />}

@@ -65,7 +65,7 @@ const appointmentBase = z.object({
   description: optText(2000),
   startsAt: iso,
   endsAt: iso,
-  place: text(300),
+  place: optText(300).default(''),
   modality: Modality.default('PRESENCIAL'),
   meetingUrl: httpsUrl,
   priority: Priority.default('MEDIA'),

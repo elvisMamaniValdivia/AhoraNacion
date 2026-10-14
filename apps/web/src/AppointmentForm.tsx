@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, ApiError } from './api';
-import { ACTIVITY_LABEL, Alternative, Appointment, Conflict, MODALITY_LABEL, PRIORITY_LABEL, ActivityType, Modality, Priority } from './types';
-import { fromInput, fmtFull, fmtRange, toInput } from './time';
+import { ACTIVITY_LABEL, Alternative, Appointment, Conflict, ActivityType, Modality, Priority } from './types';
+import { addMinutes, fromInput, fmtFull, fmtRange, toInput } from './time';
 import { Alternatives, TimeRangePicker } from './TimeRangePicker';
 import { btn, ErrorBox, Field, input, Modal } from './ui';
 
@@ -13,11 +13,25 @@ interface FormState {
   status: 'PENDIENTE' | 'CONFIRMADA'; participants: string;
 }
 
-const empty = (start = '', end = ''): FormState => ({
-  title: '', requesterName: '', requesterPhone: '', requesterEmail: '', description: '', start, end,
-  place: '', modality: 'PRESENCIAL', meetingUrl: '', priority: 'MEDIA', activityType: 'REUNION',
-  notes: '', status: 'PENDIENTE', participants: '',
-});
+const defaultStart = () => {
+  const d = new Date(Date.now() + 15 * 60000);
+  d.setMinutes(Math.ceil(d.getMinutes() / 15) * 15, 0, 0);
+  return toInput(d.toISOString());
+};
+
+const defaultEnd = (startInput: string) => {
+  return toInput(addMinutes(fromInput(startInput), 45));
+};
+
+const empty = (start = '', end = ''): FormState => {
+  const s = start || defaultStart();
+  const e = end || defaultEnd(s);
+  return {
+    title: '', requesterName: '', requesterPhone: '', requesterEmail: '', description: '', start: s, end: e,
+    place: '', modality: 'PRESENCIAL', meetingUrl: '', priority: 'MEDIA', activityType: 'REUNION',
+    notes: '', status: 'PENDIENTE', participants: '',
+  };
+};
 
 export function AppointmentForm({
   initial, prefill, onClose, onSaved,
@@ -41,7 +55,6 @@ export function AppointmentForm({
         }
       : empty(prefill?.start, prefill?.end),
   );
-  const [review, setReview] = useState(false);
   const [fields, setFields] = useState<Record<string, string>>({});
   const [conflict, setConflict] = useState<{ message: string; conflicts: Conflict[]; alternatives: Alternative[] } | null>(null);
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) => { setF((s) => ({ ...s, [k]: v })); setFields((e) => ({ ...e, [k]: '' })); };
@@ -50,7 +63,7 @@ export function AppointmentForm({
     title: f.title, requesterName: f.requesterName,
     requesterPhone: f.requesterPhone || null, requesterEmail: f.requesterEmail || null,
     description: f.description || null, startsAt: fromInput(f.start), endsAt: fromInput(f.end),
-    place: f.place, modality: f.modality, meetingUrl: f.meetingUrl || null,
+    place: f.place.trim() || 'Por coordinar', modality: f.modality, meetingUrl: f.meetingUrl || null,
     priority: f.priority, activityType: f.activityType, notes: f.notes || null,
     status: f.status,
     participants: f.participants.split(',').map((s) => s.trim()).filter(Boolean).map((name) => ({ name })),
@@ -62,11 +75,9 @@ export function AppointmentForm({
       : api<Appointment>('/api/appointments', { method: 'POST', body: body() }),
     onSuccess: (a) => { qc.invalidateQueries(); onSaved(a); },
     onError: (e) => {
-      setReview(false);
       if (e instanceof ApiError) {
         if (e.status === 400 && e.fields) {
           const m: Record<string, string> = { ...e.fields };
-          if (m.startsAt) m.startsAt = m.startsAt; 
           setFields(m);
         }
         if (e.status === 409 && e.code === 'CONFLICT') {
@@ -80,12 +91,10 @@ export function AppointmentForm({
     const e: Record<string, string> = {};
     if (!f.title.trim()) e.title = 'Este campo es obligatorio.';
     if (!f.requesterName.trim()) e.requesterName = 'Este campo es obligatorio.';
-    if (!f.place.trim()) e.place = 'Este campo es obligatorio.';
     if (!f.start) e.startsAt = 'Indique la fecha y hora de inicio.';
     if (!f.end) e.endsAt = 'Indique la hora de fin.';
     if (f.start && f.end && fromInput(f.end) <= fromInput(f.start)) e.endsAt = 'La hora de fin debe ser posterior al inicio.';
     if (f.requesterEmail && !/^\S+@\S+\.\S+$/.test(f.requesterEmail)) e.requesterEmail = 'Correo electrónico no válido.';
-    if (f.meetingUrl && !/^https?:\/\//i.test(f.meetingUrl)) e.meetingUrl = 'Use un enlace que comience con https://';
     return e;
   };
 
@@ -95,32 +104,8 @@ export function AppointmentForm({
     const errs = localErrors();
     setFields(errs);
     if (Object.keys(errs).length) return;
-    setReview(true);
+    save.mutate();
   };
-
-  if (review) {
-    return (
-      <Modal title="Confirme la cita" onClose={() => setReview(false)}>
-        <dl className="space-y-1 text-sm">
-          <div><dt className="inline font-semibold">Compromiso: </dt><dd className="inline">{f.title}</dd></div>
-          <div><dt className="inline font-semibold">Solicita: </dt><dd className="inline">{f.requesterName}</dd></div>
-          <div><dt className="inline font-semibold">Fecha: </dt><dd className="inline capitalize">{fmtFull(fromInput(f.start))}</dd></div>
-          <div><dt className="inline font-semibold">Horario: </dt><dd className="inline">{fmtRange(fromInput(f.start), fromInput(f.end)).split(' · ')[1]} (hora de Lima)</dd></div>
-          <div><dt className="inline font-semibold">Lugar: </dt><dd className="inline">{f.place} — {MODALITY_LABEL[f.modality]}</dd></div>
-        </dl>
-        <p className="mt-3 rounded bg-slate-100 p-2 text-xs text-slate-700">
-          El servidor verificará la disponibilidad al guardar. La cita solo queda registrada si el horario sigue libre.
-        </p>
-        <div className="mt-4 flex justify-end gap-2">
-          <button className={btn.secondary} onClick={() => setReview(false)}>Volver a editar</button>
-          <button className={btn.primary} disabled={save.isPending} onClick={() => save.mutate()}>
-            {save.isPending ? 'Guardando…' : initial ? 'Confirmar y guardar cambios' : 'Confirmar y registrar cita'}
-          </button>
-        </div>
-        <div className="mt-3"><ErrorBox error={save.error && !(save.error instanceof ApiError && save.error.status === 409) ? save.error : null} /></div>
-      </Modal>
-    );
-  }
 
   return (
     <Modal title={initial ? 'Editar cita' : 'Nueva cita'} onClose={onClose} wide>
@@ -151,21 +136,8 @@ export function AppointmentForm({
         )}
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Lugar o dirección *" error={fields.place}>
-            {(id, d) => <input id={id} aria-describedby={d} className={input} value={f.place} maxLength={300} onChange={(e) => set('place', e.target.value)} />}
-          </Field>
-          <Field label="Modalidad">
-            {(id) => <select id={id} className={input} value={f.modality} onChange={(e) => set('modality', e.target.value as Modality)}>
-              {Object.entries(MODALITY_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>}
-          </Field>
-          {f.modality === 'VIRTUAL' && (
-            <Field label="Enlace de videoconferencia" error={fields.meetingUrl} className="sm:col-span-2">
-              {(id, d) => <input id={id} aria-describedby={d} type="url" placeholder="https://" className={input} value={f.meetingUrl} onChange={(e) => set('meetingUrl', e.target.value)} />}
-            </Field>
-          )}
-          <Field label="Prioridad">
-            {(id) => <select id={id} className={input} value={f.priority} onChange={(e) => set('priority', e.target.value as Priority)}>
-              {Object.entries(PRIORITY_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>}
+          <Field label="Lugar o dirección (Opcional)" error={fields.place}>
+            {(id, d) => <input id={id} aria-describedby={d} placeholder="Ej. Local partidario, hotel o Por coordinar" className={input} value={f.place} maxLength={300} onChange={(e) => set('place', e.target.value)} />}
           </Field>
           <Field label="Estado inicial">
             {(id) => <select id={id} className={input} value={f.status} onChange={(e) => set('status', e.target.value as 'PENDIENTE' | 'CONFIRMADA')}>
@@ -194,9 +166,19 @@ export function AppointmentForm({
           </div>
         </details>
 
-        <div className="flex justify-end gap-2">
-          <button type="button" className={btn.secondary} onClick={onClose}>Cancelar</button>
-          <button type="submit" className={btn.primary}>Revisar y confirmar</button>
+        {save.error && !(save.error instanceof ApiError && save.error.status === 409) && (
+          <div className="mt-2">
+            <ErrorBox error={save.error} />
+          </div>
+        )}
+
+        <div className="flex justify-end gap-2 pt-3 border-t border-slate-200">
+          <button type="button" className={btn.secondary} onClick={onClose} disabled={save.isPending}>
+            Cancelar
+          </button>
+          <button type="submit" className={btn.primary} disabled={save.isPending}>
+            {save.isPending ? 'Guardando cita…' : initial ? 'Guardar Cambios' : '✔ Registrar Cita'}
+          </button>
         </div>
       </form>
     </Modal>

@@ -1,0 +1,16 @@
+{
+  "short_name": "Ahora Nación",
+  "name": "Agenda del Candidato - Ahora Nación",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#ffffff",
+  "theme_color": "#dc2626",
+  "display": "standalone",
+  "orientation": "portrait"
+}

@@ -4,11 +4,11 @@ import { Status, STATUS_LABEL, Priority, PRIORITY_LABEL } from './types';
 
 /** Estados: color + símbolo + texto (nunca solo color). Contrastes AA sobre fondo claro. */
 export const STATUS_STYLE: Record<Status, { icon: string; cls: string; bg: string; border: string; text: string }> = {
-  PENDIENTE: { icon: '◔', cls: 'bg-amber-100 text-amber-900 border-amber-600', bg: '#fef3c7', border: '#b45309', text: '#78350f' },
-  CONFIRMADA: { icon: '✔', cls: 'bg-emerald-100 text-emerald-900 border-emerald-700', bg: '#d1fae5', border: '#047857', text: '#064e3b' },
-  REALIZADA: { icon: '●', cls: 'bg-slate-200 text-slate-800 border-slate-600', bg: '#e2e8f0', border: '#475569', text: '#1e293b' },
-  CANCELADA: { icon: '✕', cls: 'bg-red-100 text-red-900 border-red-700', bg: '#fee2e2', border: '#b91c1c', text: '#7f1d1d' },
-  REPROGRAMADA: { icon: '↻', cls: 'bg-violet-100 text-violet-900 border-violet-700', bg: '#ede9fe', border: '#6d28d9', text: '#4c1d95' },
+  PENDIENTE: { icon: '◔', cls: 'bg-amber-100 text-amber-900 border-amber-600', bg: '#fef3c7', border: '#d97706', text: '#92400e' },
+  CONFIRMADA: { icon: '✔', cls: 'bg-blue-100 text-blue-900 border-blue-600', bg: '#dbeafe', border: '#2563eb', text: '#1e40af' },
+  REALIZADA: { icon: '●', cls: 'bg-red-100 text-red-900 border-red-600', bg: '#fee2e2', border: '#dc2626', text: '#991b1b' },
+  CANCELADA: { icon: '✕', cls: 'bg-slate-100 text-slate-700 border-slate-400', bg: '#f1f5f9', border: '#94a3b8', text: '#475569' },
+  REPROGRAMADA: { icon: '↻', cls: 'bg-orange-100 text-orange-900 border-orange-600', bg: '#ffedd5', border: '#ea580c', text: '#9a3412' },
 };
 
 export function StatusBadge({ status }: { status: Status }) {
@@ -27,10 +27,10 @@ export function PriorityTag({ priority }: { priority: Priority }) {
 }
 
 export const btn = {
-  primary: 'inline-flex items-center justify-center gap-1 rounded-md bg-blue-900 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed',
+  primary: 'inline-flex items-center justify-center gap-1 rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm',
   secondary: 'inline-flex items-center justify-center gap-1 rounded-md border border-slate-400 bg-white px-3 py-2 text-sm font-medium text-slate-800 hover:bg-slate-100 disabled:opacity-50',
-  danger: 'inline-flex items-center justify-center gap-1 rounded-md bg-red-700 px-3 py-2 text-sm font-semibold text-white hover:bg-red-600 disabled:opacity-50',
-  link: 'text-sm font-medium text-blue-800 underline underline-offset-2 hover:text-blue-600',
+  danger: 'inline-flex items-center justify-center gap-1 rounded-md bg-red-800 px-3 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50',
+  link: 'text-sm font-medium text-red-700 underline underline-offset-2 hover:text-red-800',
 };
 export const input = 'w-full rounded-md border border-slate-400 bg-white px-3 py-2 text-sm placeholder:text-slate-500 disabled:bg-slate-100';
 
@@ -47,23 +47,38 @@ export function Field({ label, error, children, hint, className = '' }: { label:
 }
 
 export function Modal({ title, onClose, children, wide }: { title: string; onClose: () => void; children: ReactNode; wide?: boolean }) {
-  const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const prev = document.activeElement as HTMLElement | null;
-    ref.current?.focus();
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', onKey);
-    document.body.style.overflow = 'hidden';
-    return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = ''; prev?.focus(); };
+    return () => { document.removeEventListener('keydown', onKey); };
   }, [onClose]);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/60 p-2 sm:p-6" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div ref={ref} tabIndex={-1} role="dialog" aria-modal="true" aria-label={title} className={`my-2 w-full ${wide ? 'max-w-3xl' : 'max-w-xl'} rounded-lg bg-white shadow-xl`}>
-        <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
-          <h2 className="text-lg font-bold">{title}</h2>
-          <button onClick={onClose} aria-label="Cerrar" className="rounded p-1 text-2xl leading-none text-slate-600 hover:bg-slate-100">×</button>
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/60 p-2 sm:p-6"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        className={`my-2 w-full ${wide ? 'max-w-3xl' : 'max-w-xl'} rounded-xl bg-white shadow-2xl border border-slate-200 overflow-hidden`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-3">
+          <h2 className="text-lg font-bold text-slate-800">{title}</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Cerrar"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-lg font-bold text-slate-500 hover:bg-slate-200 hover:text-slate-800 transition"
+          >
+            ✕
+          </button>
         </div>
-        <div className="p-4">{children}</div>
+        <div className="p-4 sm:p-5">{children}</div>
       </div>
     </div>
   );

@@ -41,27 +41,26 @@ export function TimeRangePicker({
     <div className="space-y-2">
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Inicio (hora de Lima)" error={errors?.startsAt}>
-          {(id, d) => <input id={id} aria-describedby={d} type="datetime-local" step={300} className={input} value={start}
+          {(id, d) => <input id={id} aria-describedby={d} type="datetime-local" className={input} value={start}
             onChange={(e) => {
               const v = e.target.value;
-              // conserva la duración al mover el inicio
               const keep = valid ? dur : 30;
               onChange(v, v ? toInput(addMinutes(fromInput(v), keep)) : end);
             }} />}
         </Field>
         <Field label="Fin (hora de Lima)" error={errors?.endsAt}>
-          {(id, d) => <input id={id} aria-describedby={d} type="datetime-local" step={300} className={input} value={end} onChange={(e) => onChange(start, e.target.value)} />}
+          {(id, d) => <input id={id} aria-describedby={d} type="datetime-local" className={input} value={end} onChange={(e) => onChange(start, e.target.value)} />}
         </Field>
       </div>
       <div className="flex flex-wrap items-center gap-2 text-sm">
-        <span className="text-slate-700">Duración:</span>
-        {[30, 45, 60, 90].map((m) => (
+        <span className="text-slate-700 font-medium">Duración:</span>
+        {[30, 45, 60, 90, 120].map((m) => (
           <button type="button" key={m} onClick={() => setDuration(m)} aria-pressed={dur === m}
-            className={`rounded-full border px-3 py-1 text-xs font-medium ${dur === m ? 'border-blue-900 bg-blue-900 text-white' : 'border-slate-400 bg-white text-slate-800 hover:bg-slate-100'}`}>
+            className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${dur === m ? 'border-red-600 bg-red-600 text-white shadow-sm' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100'}`}>
             {m} min
           </button>
         ))}
-        {valid && <span className="text-xs text-slate-600">({dur} min)</span>}
+        {valid && <span className="text-xs text-slate-600 font-semibold">({dur} min)</span>}
       </div>
 
       <div aria-live="polite" className="min-h-[1.5rem]">

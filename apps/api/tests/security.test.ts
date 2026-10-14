@@ -99,7 +99,7 @@ describe('10. Autorización y seguridad', () => {
     const r = await ana.post('/api/appointments', { title: '', startsAt: 'mañana' });
     expect(r.status).toBe(400);
     expect(r.body.fields.title).toBe('Este campo es obligatorio.');
-    expect(r.body.fields.place).toBeDefined();
+    expect(r.body.fields.requesterName).toBeDefined();
     const weak = await admin.post('/api/users', { name: 'Débil', email: 'd@prueba.test', password: 'abc' });
     expect(weak.status).toBe(400);
     const u = await prisma.user.findFirstOrThrow({ where: { email: 'ana@prueba.test' } });

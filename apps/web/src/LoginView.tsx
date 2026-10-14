@@ -32,10 +32,17 @@ export function LoginView() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-slate-100 p-4">
       <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-xl">
         <div className="text-center mb-6">
-          <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-blue-900 text-white font-black text-xl shadow">
-            AN
+          <div className="mx-auto mb-3 flex h-24 w-24 items-center justify-center overflow-hidden rounded-2xl bg-red-600 shadow-md ring-4 ring-red-100">
+            <img
+              src="/logo-ahora-nacion.png"
+              alt="Ahora Nación"
+              className="h-full w-full object-cover"
+            />
           </div>
-          <h1 className="mt-3 text-2xl font-black tracking-tight text-slate-900">
+          <span className="inline-block rounded-full bg-red-100 px-3 py-0.5 text-xs font-black uppercase tracking-wider text-red-700">
+            Ahora Nación
+          </span>
+          <h1 className="mt-2 text-2xl font-black tracking-tight text-slate-900">
             Agenda del Candidato
           </h1>
           <p className="mt-1 text-sm text-slate-600">
